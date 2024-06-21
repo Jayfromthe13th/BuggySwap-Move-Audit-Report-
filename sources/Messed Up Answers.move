@@ -9,12 +9,7 @@ module buggyswap::market {
     use aptos_framework::table::{Self, Table};
 
 
- 
-
-
     const PROTOCOL_FEE_BPS: u64 = 50; // 0.5%
-
-
 
 
     const ERR_COINSTORE_NONEXISTENT: u64 = 101;
@@ -61,8 +56,6 @@ module buggyswap::market {
     struct BUG {}
     struct LimitSwapOrder {}
     
-
-
 
 
     public fun swap<BaseCoinType, QuoteCoinType>(
