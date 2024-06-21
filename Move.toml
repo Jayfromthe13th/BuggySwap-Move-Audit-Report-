@@ -1,0 +1,9 @@
+[package]
+name = 'buggyswap'
+version = '1.0.0'
+
+[dependencies.AptosFramework]
+local = 'lib/aptos-core/aptos-move/framework/aptos-framework'
+
+[addresses]
+donkeyswap="0xbunchofbuggs"
