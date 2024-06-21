@@ -21,6 +21,11 @@ BuggySwap is an Automated Market Maker (AMM) that utilizes an oracle for pricing
 
 The primary purpose of this repository is to showcase and demonstrate common vulnerabilities that are often found in Aptos Move protocols. By studying BuggySwap, developers can learn to identify and mitigate these vulnerabilities in their own projects.
 
+
+### Findings
+Detailed findings can be found at 👉🏽 https://github.com/Jayfromthe13th/BuggySwap-Move-Audit-Report-/blob/master/%F0%9F%8C%B1Hyacinth.pdf 
+
+
 ### Important Notice
 
 This contract is deliberately designed to contain vulnerabilities. It is intended solely for learning and educational purposes within the Hyacinth platform. Under no circumstances should it be used in a production environment.
