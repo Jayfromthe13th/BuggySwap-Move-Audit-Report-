@@ -9,13 +9,12 @@ module buggyswap::market {
     use aptos_framework::table::{Self, Table};
 
 
-    //////// SECTION: CONFIGURATION
+ 
 
 
     const PROTOCOL_FEE_BPS: u64 = 50; // 0.5%
 
 
-    //////// SECTION: CONSTANTS AND DEFINITIONS
 
 
     const ERR_COINSTORE_NONEXISTENT: u64 = 101;
@@ -63,7 +62,7 @@ module buggyswap::market {
     struct LimitSwapOrder {}
     
 
-    //////// SECTION: ENTRY FUNCTIONS
+
 
 
     public fun swap<BaseCoinType, QuoteCoinType>(
@@ -82,17 +81,15 @@ module buggyswap::market {
     ): (u64) acquires OrderStore, CoinStore {
         assert_input_cointype<CoinType>();
 
-        // withdraw coin
+       
         let order_store = borrow_global_mut<OrderStore>(@buggyswap);
         withdraw_funds<CoinType>(order_store, user, size);
 
-        // give lp coin
-        // no protocol fees for depositing liquidity
+       
         let lp_coin_amount = calculate_lp_coin_amount_internal(order_store, size, type_info::type_of<CoinType>());
         deposit_funds<BUG>(order_store, address_of(user), lp_coin_amount);
 
-        // since there is more liquidity in one side, retry fulfilling orders;
-        // some may not have been fulfilled because of insufficient liquidity
+    
         fulfill_orders<CoinType>();
 
         return lp_coin_amount
@@ -105,11 +102,9 @@ module buggyswap::market {
     ): (u64) acquires OrderStore, CoinStore {
         assert_input_cointype<CoinType>();
 
-        // withdraw lp coin
         let order_store = borrow_global_mut<OrderStore>(@buggyswap);
         withdraw_funds<BUG>(order_store, user, lp_size);
 
-        // calculate coin size to transfer
         let size = calculate_coin_from_lp_coin_amount_internal<CoinType>(order_store, lp_size);
         let fees = calculate_protocol_fees(size);
         let size_after_fees = size - fees;
@@ -123,7 +118,6 @@ module buggyswap::market {
     }
 
     
-    /// Don't swap until receiving at least min_quote
     public fun limit_swap<BaseCoinType, QuoteCoinType>(
         user: &signer,
         base: u64,
@@ -134,11 +128,9 @@ module buggyswap::market {
 
         let order_store = borrow_global_mut<OrderStore>(@buggyswap);
 
-        // withdraw coin
         withdraw_funds<BaseCoinType>(order_store, user, base);
         lock_coin(order_store, base, type_info::type_of<BaseCoinType>());
 
-        // register order
         let order = Order {
             type: type_info::type_of<LimitSwapOrder>(),
             id: { order_store.current_id = order_store.current_id + 1; order_store.current_id },
@@ -220,7 +212,6 @@ module buggyswap::market {
         return execute_order<CoinType>(order_store, option::borrow(&order_option))
     }
 
-    //////// SECTION: INTERNAL FUNCTIONS
 
 
     fun get_next_order(orders: &mut vector<Order>): (Option<Order>) {
@@ -229,7 +220,6 @@ module buggyswap::market {
             return option::none<Order>()
         };
 
-        // just pop from it
         let order: Order = vector::remove<Order>(orders, 0);
         return option::some<Order>(order)
     }
@@ -240,13 +230,12 @@ module buggyswap::market {
         user_address: address,
         size: u64
     ): (u64) acquires CoinStore { // error code, if any (otherwise 0)
-        // checks
 
         if (size > get_liquidity_size_internal(order_store, type_info::type_of<CoinType>())) {
             return ERR_LIQUIDITY_INSUFFICIENT
         };
 
-        // effects
+        
 
         deposit_funds<CoinType>(order_store, user_address, size);
         return 0
@@ -294,7 +283,6 @@ module buggyswap::market {
         order_store: &mut OrderStore,
         order: &Order
     ): (u64) acquires CoinStore {
-        // checks
 
         if (order.quote_type != type_info::type_of<QuoteCoinType>()) {
             return ERR_ORDER_WRONG_COIN_TYPE
@@ -310,7 +298,6 @@ module buggyswap::market {
             return ERR_QUOTE_INSUFFICIENT
         };
 
-        // effects
 
         let error_code = execute_remove_liquidity<QuoteCoinType>(order_store, order.user_address, size_after_fees);
         if (error_code == 0) {
@@ -318,8 +305,7 @@ module buggyswap::market {
             record_protocol_fees_paid<QuoteCoinType>(order_store, fees);
             unlock_coin(order_store, order.base, order.base_type);
             drop_order(order_store, order);
-        }; // otherwise, leave it to be executed later
-
+        }; 
         return error_code
     }
 
@@ -401,8 +387,6 @@ module buggyswap::market {
         assert!(type_info::type_of<CoinType>() != type_info::type_of<BUG>(), ERR_ORDER_WRONG_COIN_TYPE);
     }
 
-//////// SECTION: ADMIN-ONLY ENTRY FUNCTIONS
-
 
     public entry fun admin_setup(admin: &signer) acquires OrderStore {
         assert!(address_of(admin) == @buggyswap, ERR_PERMISSION_DENIED);
@@ -473,8 +457,6 @@ module buggyswap::market {
     public entry fun resume_protocol(admin: &signer) {
         buggyswap::market::resume_protocol(admin);
     }
-
-    //////// SECTION: READ-ONLY FUNCTIONS
 
 
     fun calculate_lp_coin_amount_internal(
@@ -596,8 +578,6 @@ module buggyswap::market {
         return get_liquidity_size_internal(order_store, type)
     }
 
-
-    //////// SECTION: ORACLE CODE
 
 //@audit Vuln: price oracle manipulation 
     fun get_price_internal(
